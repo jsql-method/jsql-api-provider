@@ -4,3 +4,4 @@
 /libs/
 /build/
 !gradle/wrapp
+/.idea
