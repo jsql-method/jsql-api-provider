@@ -1,0 +1,6 @@
+.gradle
+/gradle/
+/out/
+/libs/
+/build/
+!gradle/wrapp
