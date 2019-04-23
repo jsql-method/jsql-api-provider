@@ -1,0 +1,3 @@
+FROM openjdk:8u191-jre-alpine
+COPY build/libs/*.jar /tmp/jsql-api-provider.jar
+CMD java -jar /tmp/jsql-api-provider.jar
