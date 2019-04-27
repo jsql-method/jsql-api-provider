@@ -1,140 +1,117 @@
 package pl.jsql.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.jsql.connector.dto.HashQueryPair;
-import it.jsql.connector.exceptions.ErrorMessagesSingleton;
-import it.jsql.connector.exceptions.JSQLException;
+import com.google.gson.Gson;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import pl.jsql.dto.HashQueryPair;
+import pl.jsql.dto.OptionsResponse;
+import pl.jsql.enums.CacheType;
+import pl.jsql.exceptions.JSQLException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Created by Dawid on 2016-09-13.
- * Modified by Michael on 2018-09-10.
- */
-class JSQLConnector {
+@Service
+public class JSQLConnector {
 
-    protected Boolean isMock = false;
+    @Value("${jsql.origin}")
+    private String origin;
 
-    //protected String host = "http://localhost:9191/";
-    protected String host = "http://softwarecartoon.com:9391/";
-    protected String requestQueriesPath = "api/request/queries";
+    @Value("${jsql.api.path.request.options-all}")
+    private String requestOptions;
 
-    private String apiKey = null;
-    private String memberKey = null;
+    @Value("${jsql.api.path.request.queries}")
+    private String requestQueries;
 
-    public JSQLConnector() {
-    }
+    @Value("${jsql.api.path.request.queries-grouped}")
+    private String requestQueriesGrouped;
 
-    public JSQLConnector(String apiKey, String memberKey) {
-        this.setApiKey(apiKey);
-        this.setMemberKey(memberKey);
-    }
+    @Autowired
+    private SecurityService securityService;
 
-    public String getRequestQueriesPath() {
-        return requestQueriesPath;
-    }
+    @Autowired
+    private CacheService cacheService;
 
-    public String getHost() {
-        return host;
-    }
+    public List<HashQueryPair> requestQueries(List<String> hashesList)  {
 
-    public String getApiKey() throws JSQLException {
+        Boolean isGrouped = hashesList.size() > 1;
+        String fullUrl = origin + requestQueries;
 
-        if (this.apiKey == null) {
-            throw new JSQLException("No apiKey defined");
+        if (isGrouped) {
+            fullUrl = origin + requestQueriesGrouped;
         }
 
-        return apiKey;
 
-    }
+        String responseJSON = this.call(fullUrl, hashesList, "POST");
 
-    public String getMemberKey() throws JSQLException {
-        if (this.memberKey == null) {
-            throw new JSQLException("No member key defined");
-        }
-        return memberKey;
-    }
-
-    public void setMemberKey(String memberKey) {
-        this.memberKey = memberKey;
-    }
-
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
-    }
-
-    public List<HashQueryPair> requestQueries(List<String> hashesList) throws JSQLException {
-
-        System.out.println("requestQueries apiKey " + this.getApiKey());
-
-        if (isMock) {
-
-            List<HashQueryPair> mockResponse = new ArrayList<>();
-
-            for (String hash : hashesList) {
-                mockResponse.add(new HashQueryPair(hash, "select * from users"));
-            }
-
-            return mockResponse;
-
-        } else {
-
-            System.out.println("size: "+hashesList.size());
-
-            return this.call(this.buildJSONRequest(hashesList), hashesList.size() > 1);
-        }
-
-    }
-
-    protected String buildJSONRequest(List<String> hashesList) {
-
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append("[");
-
-        for (int i = 0; i < hashesList.size(); i++) {
-            stringBuilder.append("\"" + hashesList.get(i) + "\"");
-            if (i != hashesList.size() - 1) {
-                stringBuilder.append(",");
+        if (!responseJSON.isEmpty()) {
+            try {
+                return Arrays.asList(new ObjectMapper().readValue(responseJSON, HashQueryPair[].class));
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new JSQLException("JSQL JSQLConnector.requestQueries: "+e.getMessage());
             }
         }
 
-        stringBuilder.append("]");
-
-        return stringBuilder.toString();
+        return new ArrayList<>();
 
     }
 
+    public OptionsResponse requestOptions()  {
 
-    protected List<HashQueryPair> call(String request, Boolean isGrouped) {
-        String fullUrl = this.getHost() + this.getRequestQueriesPath();
+        if(cacheService.exists(CacheType.OPTIONS)){
+            return (OptionsResponse) cacheService.get(CacheType.OPTIONS);
+        }
 
+        OptionsResponse optionsResponse = null;
+        String responseJSON = this.call(origin + requestOptions, "GET");
 
-        System.out.println("request : "+request);
+        if (!responseJSON.isEmpty()) {
+            try {
+                optionsResponse = new ObjectMapper().readValue(responseJSON, OptionsResponse.class);
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new JSQLException("JSQL JSQLConnector.requestOptions: "+e.getMessage());
+            }
+        }
 
-        if (isGrouped)
-            fullUrl += "/grouped";
+        cacheService.cache(CacheType.OPTIONS, optionsResponse);
+
+        return optionsResponse;
+
+    }
+
+    public String call(String fullUrl, String method)  {
+        return this.call(fullUrl, null, method);
+    }
+
+    public String call(String fullUrl, Object request, String method)  {
+
         try {
 
             URL url = new URL(fullUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
-            conn.setRequestMethod("POST");
+            conn.setRequestMethod(method);
             conn.setRequestProperty("Content-Type", "application/json");
-            conn.setRequestProperty("ApiKey", this.getApiKey());
-            conn.setRequestProperty("MemberKey", this.getMemberKey());
+            conn.setRequestProperty("ApiKey", securityService.getApiKey());
+            conn.setRequestProperty("DevKey", securityService.getDevKey());
 
             OutputStream os = conn.getOutputStream();
-            os.write(request.getBytes());
+
+            if (method.equals("POST")) {
+                os.write(new Gson().toJson(request).getBytes());
+            }
+
             os.flush();
 
             if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -147,7 +124,6 @@ class JSQLConnector {
 
                 String response = builder.toString();
                 response = response.substring(response.lastIndexOf("</div><div>") + 11, response.lastIndexOf("</div></body></html>"));
-                ErrorMessagesSingleton.getInstance().setMessage(response);
                 throw new JSQLException("HTTP error code : " + conn.getResponseCode() + "\nHTTP error message : " + response);
             }
 
@@ -161,29 +137,13 @@ class JSQLConnector {
 
             conn.disconnect();
 
-            String responseJSON = builder.toString();
-
-            if (!responseJSON.isEmpty()) {
-                List<HashQueryPair> response = Arrays.asList(new ObjectMapper().readValue(responseJSON, HashQueryPair[].class));
-                return response;
-            }
+            return builder.toString();
 
 
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            if (e.getMessage() != null)
-                ErrorMessagesSingleton.getInstance().setMessage(e.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
-            if (e.getMessage() != null)
-                ErrorMessagesSingleton.getInstance().setMessage(e.getMessage());
-        } catch (JSQLException e) {
-            e.printStackTrace();
-            if (e.getMessage() != null)
-                ErrorMessagesSingleton.getInstance().setMessage(e.getMessage());
+            throw new JSQLException("IOException JSQLConnector.call: " + e.getMessage());
         }
-
-        return null;
 
     }
 

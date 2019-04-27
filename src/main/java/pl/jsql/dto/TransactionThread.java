@@ -1,5 +1,7 @@
 package pl.jsql.dto;
 
+import pl.jsql.service.JSQLService;
+
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +20,15 @@ public class TransactionThread {
         this.request = request;
         this.isTransactional = transactionId != null;
         this.transactionId = transactionId;
+        this.paramsAsArray = request.get(JSQLService.PARAMS_NAME) instanceof List;
+    }
+
+
+    public TransactionThread(String transactionId) {
+        this.request = null;
+        this.isTransactional = transactionId != null;
+        this.transactionId = transactionId;
+        this.paramsAsArray = false;
     }
 
 }

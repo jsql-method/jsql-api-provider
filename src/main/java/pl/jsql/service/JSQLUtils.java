@@ -24,4 +24,16 @@ public class JSQLUtils {
         return sql;
     }
 
+
+    public static String getSQLExceptionCause(Exception e) {
+        Throwable cause = e;
+
+        while (cause.getCause() != null && cause.getCause() != cause) {
+            cause = cause.getCause();
+        }
+
+        return cause.getMessage() != null ? cause.getMessage().split("\n")[0] : (e.getMessage() != null ? e.getMessage() : "No message available");
+
+    }
+
 }
