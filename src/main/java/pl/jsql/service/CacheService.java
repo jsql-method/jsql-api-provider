@@ -34,5 +34,12 @@ public class CacheService {
         this.cache = new HashMap<>();
     }
 
+    public HashMap<String, Object> getCache() {
+        return cache;
+    }
 
+
+    public Object getByKey(String cacheKey) {
+        return this.cache.get(cacheKey);
+    }
 }

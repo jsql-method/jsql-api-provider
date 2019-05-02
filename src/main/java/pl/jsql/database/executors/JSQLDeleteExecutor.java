@@ -14,7 +14,7 @@ import java.util.Map;
 @Repository
 public class JSQLDeleteExecutor {
 
-    public List<Map<String, Object>> execute(PreparedStatement ps) {
+    public List<Map<String, Object>> execute(PreparedStatement ps) throws JSQLException {
 
         List<Map<String, Object>> response = new ArrayList<>();
 

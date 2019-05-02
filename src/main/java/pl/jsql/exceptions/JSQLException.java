@@ -1,6 +1,6 @@
 package pl.jsql.exceptions;
 
-public class JSQLException extends RuntimeException {
+public class JSQLException extends Exception {
 
     public JSQLException(){
         super();
@@ -14,6 +14,10 @@ public class JSQLException extends RuntimeException {
 
     public JSQLException(String message, String description){
         this.description = description;
+    }
+
+    public String getDescription(){
+        return this.description;
     }
 
 }

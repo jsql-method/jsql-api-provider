@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import pl.jsql.dto.MessageResponse;
 import pl.jsql.exceptions.JSQLException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -16,8 +17,8 @@ import javax.servlet.http.HttpServletRequest;
 @Component
 public class ProviderSecurityInterceptor {
 
-    public static final String API_KEY_HEADER = "ApiKey";
-    public static final String DEV_KEY_HEADER = "DevKey";
+    public static final String API_KEY_HEADER = "Api-Key";
+    public static final String DEV_KEY_HEADER = "Dev-Key";
 
     @Autowired
     private HttpServletRequest request;
@@ -27,13 +28,13 @@ public class ProviderSecurityInterceptor {
     }
 
     @Around("pl.jsql.interceptors.ProviderSecurityInterceptor.providerSecurityAnnotation()")
-    Object doSomething(ProceedingJoinPoint pjp) throws Throwable {
+    public Object doSomething(ProceedingJoinPoint pjp) throws Throwable {
 
         String apiKey = request.getHeader(API_KEY_HEADER);
         String devKey = request.getHeader(DEV_KEY_HEADER);
 
         if (apiKey == null || devKey == null) {
-            return new ResponseEntity<>(new JSQLException("Unauthorized"), HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(new MessageResponse( "Unauthorized"), HttpStatus.UNAUTHORIZED);
         }
 
         return pjp.proceed();

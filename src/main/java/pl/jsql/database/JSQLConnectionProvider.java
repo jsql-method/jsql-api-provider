@@ -21,7 +21,7 @@ public class JSQLConnectionProvider {
 
     private static Map<String, Connection> connections = new HashMap<>();
 
-    private Connection getConnection() {
+    private Connection getConnection() throws JSQLException {
 
         OptionsResponse optionsResponse = jsqlConnector.requestOptions();
 
@@ -35,15 +35,30 @@ public class JSQLConnectionProvider {
         }
 
         Properties properties = new Properties();
-        properties.put("user", optionsResponse.databaseConnectionUsername);
-        properties.put("password", optionsResponse.databaseConnectionPassword);
+
+        String username;
+        String password;
+        String connectionUrl;
+
+        if(optionsResponse.prod){
+            username = optionsResponse.productionDatabaseOptions.databaseConnectionUsername;
+            password = optionsResponse.productionDatabaseOptions.databaseConnectionPassword;
+            connectionUrl = optionsResponse.productionDatabaseOptions.databaseConnectionUrl;
+        }else{
+            username = optionsResponse.developerDatabaseOptions.databaseConnectionUsername;
+            password = optionsResponse.developerDatabaseOptions.databaseConnectionPassword;
+            connectionUrl = optionsResponse.developerDatabaseOptions.databaseConnectionUrl;
+        }
+
+        if(username != null && password != null){
+            properties.put("user", username);
+            properties.put("password", password);
+        }
 
         Connection connection;
 
         try {
-
-            connection = DriverManager.getConnection(optionsResponse.databaseConnectionUrl, properties);
-
+            connection = DriverManager.getConnection(connectionUrl, properties);
         } catch (SQLException e) {
             e.printStackTrace();
             throw new JSQLException("JSQL JSQLConnectionProvider.getConnection: " + e.getMessage() + " " + e.getSQLState());
@@ -53,7 +68,7 @@ public class JSQLConnectionProvider {
 
     }
 
-    public Connection resolveConnection(String transactionId, Boolean isTransaction) {
+    public Connection resolveConnection(String transactionId, Boolean isTransaction) throws JSQLException {
 
         if (!isTransaction) {
             return this.getConnection();
@@ -107,7 +122,7 @@ public class JSQLConnectionProvider {
 
     }
 
-    public void removeConnection(Connection connection) {
+    public void removeConnection(Connection connection) throws JSQLException {
 
         try {
 
@@ -122,16 +137,25 @@ public class JSQLConnectionProvider {
 
     }
 
-    public void removeConnection(Connection connection, String transactionId) {
+    public void removeConnection(Connection connection, String transactionId) throws JSQLException {
 
         OptionsResponse optionsResponse = jsqlConnector.requestOptions();
+        Integer connectionTimeout;
+
+        if(optionsResponse.prod){
+            connectionTimeout = optionsResponse.productionDatabaseOptions.databaseConnectionTimeout;
+        }else{
+            connectionTimeout = optionsResponse.developerDatabaseOptions.databaseConnectionTimeout;
+        }
+
+        Integer finalConnectionTimeout = connectionTimeout;
 
         new Thread(() -> {
 
             try {
 
 
-                Thread.sleep(optionsResponse.databaseConnectionTimeout);
+                Thread.sleep(finalConnectionTimeout *1000);
 
                 if (!connection.isClosed()) {
 

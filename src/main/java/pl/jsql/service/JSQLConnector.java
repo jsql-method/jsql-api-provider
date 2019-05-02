@@ -5,19 +5,16 @@ import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import pl.jsql.dto.HashQueryPair;
-import pl.jsql.dto.OptionsResponse;
+import pl.jsql.dto.*;
 import pl.jsql.enums.CacheType;
 import pl.jsql.exceptions.JSQLException;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -41,7 +38,7 @@ public class JSQLConnector {
     @Autowired
     private CacheService cacheService;
 
-    public List<HashQueryPair> requestQueries(List<String> hashesList)  {
+    public List<HashQueryPair> requestQueries(List<String> hashesList) throws JSQLException {
 
         Boolean isGrouped = hashesList.size() > 1;
         String fullUrl = origin + requestQueries;
@@ -55,10 +52,13 @@ public class JSQLConnector {
 
         if (!responseJSON.isEmpty()) {
             try {
-                return Arrays.asList(new ObjectMapper().readValue(responseJSON, HashQueryPair[].class));
+
+                BasicResponseWithHashQueryPair basicResponse = new ObjectMapper().readValue(responseJSON, BasicResponseWithHashQueryPair.class);
+                return basicResponse.data;
+
             } catch (IOException e) {
                 e.printStackTrace();
-                throw new JSQLException("JSQL JSQLConnector.requestQueries: "+e.getMessage());
+                throw new JSQLException("JSQL JSQLConnector.requestQueries: " + e.getMessage());
             }
         }
 
@@ -66,9 +66,9 @@ public class JSQLConnector {
 
     }
 
-    public OptionsResponse requestOptions()  {
+    public OptionsResponse requestOptions() throws JSQLException {
 
-        if(cacheService.exists(CacheType.OPTIONS)){
+        if (cacheService.exists(CacheType.OPTIONS)) {
             return (OptionsResponse) cacheService.get(CacheType.OPTIONS);
         }
 
@@ -77,10 +77,10 @@ public class JSQLConnector {
 
         if (!responseJSON.isEmpty()) {
             try {
-                optionsResponse = new ObjectMapper().readValue(responseJSON, OptionsResponse.class);
+                optionsResponse = new ObjectMapper().readValue(responseJSON, BasicResponseWithOptionsResponse.class).data;
             } catch (IOException e) {
                 e.printStackTrace();
-                throw new JSQLException("JSQL JSQLConnector.requestOptions: "+e.getMessage());
+                throw new JSQLException("JSQL JSQLConnector.requestOptions: " + e.getMessage());
             }
         }
 
@@ -90,40 +90,71 @@ public class JSQLConnector {
 
     }
 
-    public String call(String fullUrl, String method)  {
+    public String call(String fullUrl, String method) throws JSQLException {
         return this.call(fullUrl, null, method);
     }
 
-    public String call(String fullUrl, Object request, String method)  {
+    public String call(String fullUrl, Object request, String method) throws JSQLException {
+
+        HttpURLConnection conn = null;
 
         try {
 
             URL url = new URL(fullUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn = (HttpURLConnection) url.openConnection();
+
             conn.setDoOutput(true);
+            conn.setDoInput(true);
+
             conn.setRequestMethod(method);
             conn.setRequestProperty("Content-Type", "application/json");
-            conn.setRequestProperty("ApiKey", securityService.getApiKey());
-            conn.setRequestProperty("DevKey", securityService.getDevKey());
-
-            OutputStream os = conn.getOutputStream();
+            conn.setRequestProperty("Api-Key", securityService.getApiKey());
+            conn.setRequestProperty("Dev-Key", securityService.getDevKey());
+            conn.setUseCaches(false);
 
             if (method.equals("POST")) {
+
+                OutputStream os = conn.getOutputStream();
+
                 os.write(new Gson().toJson(request).getBytes());
+                System.out.println("request: " + new Gson().toJson(request));
+
+                os.flush();
+
             }
 
-            os.flush();
+            System.out.println("fullUrl: " + fullUrl);
+            System.out.println("method: " + method);
+
+            System.out.println("conn.getResponseCode(): " + conn.getResponseCode());
 
             if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+
+                System.out.println("conn: " + conn);
+
+                System.out.println("conn.getErrorStream(): " + conn.getErrorStream());
+
+                InputStream inputStream = conn.getErrorStream();
+
+                if (inputStream == null) {
+                    conn.disconnect();
+                    throw new JSQLException("HTTP error code : " + conn.getResponseCode());
+                }
+
                 BufferedReader br = new BufferedReader(new InputStreamReader((conn.getErrorStream())));
                 StringBuilder builder = new StringBuilder();
                 while (br.ready()) {
                     builder.append(br.readLine());
                 }
+
                 conn.disconnect();
 
-                String response = builder.toString();
-                response = response.substring(response.lastIndexOf("</div><div>") + 11, response.lastIndexOf("</div></body></html>"));
+                String response = builder.toString().trim();
+
+                if (response.length() > 0 && response.contains("<div>")) {
+                    response = response.substring(response.lastIndexOf("</div><div>") + 11, response.lastIndexOf("</div></body></html>"));
+                }
+
                 throw new JSQLException("HTTP error code : " + conn.getResponseCode() + "\nHTTP error message : " + response);
             }
 
@@ -140,9 +171,15 @@ public class JSQLConnector {
             return builder.toString();
 
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             throw new JSQLException("IOException JSQLConnector.call: " + e.getMessage());
+        } finally {
+
+            if (conn != null) {
+                conn.disconnect();
+            }
+
         }
 
     }

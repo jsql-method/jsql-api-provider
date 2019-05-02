@@ -1,32 +1,31 @@
 package pl.jsql.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pl.jsql.annotations.ProviderSecurity;
 import pl.jsql.dto.TransactionThread;
 import pl.jsql.enums.JSQLQueryTypeEnum;
 import pl.jsql.exceptions.JSQLException;
 import pl.jsql.service.JSQLService;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 import java.util.Map;
-
 
 @CrossOrigin
 @RestController
-public class JSQLController {
+@RequestMapping("/api/jsql")
+public class JSQLController extends ValidateController {
 
     private final String TRANSACTION_ID = "TXID";
 
     @Autowired
-    private ApplicationContext applicationContext;
-
-    @Autowired
     private JSQLService jsqlService;
 
+    @ProviderSecurity
     @PostMapping("/select")
-    public List<Map<String, Object>> select(@RequestBody Map<String, Object> data, @RequestHeader(value = TRANSACTION_ID, required = false) String transactionId, HttpServletResponse response)  {
+    public ResponseEntity select(@RequestBody Map<String, Object> data, @RequestHeader(value = TRANSACTION_ID, required = false) String transactionId, HttpServletResponse response) throws JSQLException {
 
         TransactionThread transactionThread = new TransactionThread(data, transactionId);
 
@@ -36,11 +35,12 @@ public class JSQLController {
             response.addHeader(TRANSACTION_ID, transactionThread.transactionId);
         }
 
-        return transactionThread.response;
+        return new ResponseEntity<>(transactionThread.response, HttpStatus.OK);
     }
 
+    @ProviderSecurity
     @DeleteMapping("/delete")
-    public List<Map<String, Object>> delete(@RequestBody Map<String, Object> data, @RequestHeader(value = TRANSACTION_ID, required = false) String transactionId, HttpServletResponse response)  {
+    public ResponseEntity delete(@RequestBody Map<String, Object> data, @RequestHeader(value = TRANSACTION_ID, required = false) String transactionId, HttpServletResponse response) throws JSQLException {
 
         TransactionThread transactionThread = new TransactionThread(data, transactionId);
 
@@ -50,11 +50,12 @@ public class JSQLController {
             response.addHeader(TRANSACTION_ID, transactionThread.transactionId);
         }
 
-        return transactionThread.response;
+        return new ResponseEntity<>(transactionThread.response, HttpStatus.OK);
     }
 
+    @ProviderSecurity
     @PostMapping("/update")
-    public List<Map<String, Object>> update(@RequestBody Map<String, Object> data, @RequestHeader(value = TRANSACTION_ID, required = false) String transactionId, HttpServletResponse response)  {
+    public ResponseEntity update(@RequestBody Map<String, Object> data, @RequestHeader(value = TRANSACTION_ID, required = false) String transactionId, HttpServletResponse response) throws JSQLException {
 
         TransactionThread transactionThread = new TransactionThread(data, transactionId);
 
@@ -64,11 +65,12 @@ public class JSQLController {
             response.addHeader(TRANSACTION_ID, transactionThread.transactionId);
         }
 
-        return transactionThread.response;
+        return new ResponseEntity<>(transactionThread.response, HttpStatus.OK);
     }
 
+    @ProviderSecurity
     @PostMapping("/insert")
-    public List<Map<String, Object>> insert(@RequestBody Map<String, Object> data, @RequestHeader(value = TRANSACTION_ID, required = false) String transactionId, HttpServletResponse response)  {
+    public ResponseEntity insert(@RequestBody Map<String, Object> data, @RequestHeader(value = TRANSACTION_ID, required = false) String transactionId, HttpServletResponse response) throws JSQLException {
 
         TransactionThread transactionThread = new TransactionThread(data, transactionId);
 
@@ -78,14 +80,18 @@ public class JSQLController {
             response.addHeader(TRANSACTION_ID, transactionThread.transactionId);
         }
 
-        return transactionThread.response;
+        return new ResponseEntity<>(transactionThread.response, HttpStatus.OK);
     }
 
+    @ProviderSecurity
     @GetMapping("/commit")
-    public void commit(@RequestHeader(TRANSACTION_ID) String transactionId) {
+    public ResponseEntity commit(@RequestHeader(TRANSACTION_ID) String transactionId) throws JSQLException {
 
         TransactionThread transactionThread = new TransactionThread(transactionId);
         jsqlService.commitTransaction(transactionThread);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+
     }
 
 }

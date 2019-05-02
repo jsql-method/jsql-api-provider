@@ -7,7 +7,6 @@ import pl.jsql.database.executors.JSQLDeleteExecutor;
 import pl.jsql.database.executors.JSQLInsertExecutor;
 import pl.jsql.database.executors.JSQLSelectExecutor;
 import pl.jsql.database.executors.JSQLUpdateExecutor;
-import pl.jsql.dto.BasicResponse;
 import pl.jsql.dto.TransactionThread;
 import pl.jsql.enums.JSQLQueryTypeEnum;
 import pl.jsql.exceptions.JSQLException;
@@ -15,7 +14,6 @@ import pl.jsql.service.JSQLUtils;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -38,7 +36,7 @@ public class JSQLSQLExecutor {
     private JSQLDeleteExecutor deleteExecutor;
 
 
-    public void executeQuery(JSQLQueryTypeEnum queryTypeEnum, String sql, Map<String, Object> params, TransactionThread transactionThread) {
+    public void executeQuery(JSQLQueryTypeEnum queryTypeEnum, String sql, Map<String, Object> params, TransactionThread transactionThread) throws JSQLException {
 
         Connection connection = jsqlConnectionProvider.resolveConnection(transactionThread.transactionId, transactionThread.isTransactional);
 
@@ -109,7 +107,7 @@ public class JSQLSQLExecutor {
 
     }
 
-    public List<Map<String, Object>> commit(TransactionThread transactionThread) {
+    public List<Map<String, Object>> commit(TransactionThread transactionThread) throws JSQLException {
 
         List<Map<String, Object>> response = new ArrayList<>();
         Map<String, Object> responseObject = new HashMap<>();
@@ -154,7 +152,7 @@ public class JSQLSQLExecutor {
         return paramsMapWithIndex;
     }
 
-    private String substituteParams(String sql, Map<String, Object> params) {
+    private String substituteParams(String sql, Map<String, Object> params) throws JSQLException {
         String finalSql = sql;
         for (Map.Entry<String, Object> map : params.entrySet()) {
             finalSql = finalSql.replace(":" + map.getKey(), "?");
