@@ -23,7 +23,7 @@ public class JSQLInsertExecutor {
     @Autowired
     private JSQLConnector jsqlConnector;
 
-    public List<Map<String, Object>> execute(PreparedStatement ps, String finalSql, Connection connection, Map<Integer, Object> psParams) {
+    public List<Map<String, Object>> execute(PreparedStatement ps, String finalSql, Connection connection, Map<Integer, Object> psParams) throws JSQLException {
 
         OptionsResponse optionsResponse = jsqlConnector.requestOptions();
 

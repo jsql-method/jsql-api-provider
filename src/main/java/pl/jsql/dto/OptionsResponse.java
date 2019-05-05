@@ -33,12 +33,12 @@ public class OptionsResponse {
 
     public Boolean prod;
 
-    public Integer databaseConnectionTimeout;
+    public String randomSaltBefore;
 
-    public String databaseConnectionUrl;
+    public String randomSaltAfter;
 
-    public String databaseConnectionUsername;
+    public DatabaseConnectionResponse productionDatabaseOptions;
 
-    public String databaseConnectionPassword;
+    public DatabaseConnectionResponse developerDatabaseOptions;
 
 }

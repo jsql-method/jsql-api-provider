@@ -33,7 +33,7 @@ public class JSQLService {
      * @param queryTypeEnum
      * @
      */
-    public void query(TransactionThread transactionThread, JSQLQueryTypeEnum queryTypeEnum) {
+    public void query(TransactionThread transactionThread, JSQLQueryTypeEnum queryTypeEnum) throws JSQLException {
 
         String sql = this.getSQLQuery(transactionThread.request);
 
@@ -48,7 +48,7 @@ public class JSQLService {
 
     }
 
-    public void commitTransaction(TransactionThread transactionThread) {
+    public void commitTransaction(TransactionThread transactionThread) throws JSQLException {
         hibernateExecutor.commit(transactionThread);
     }
 
@@ -109,7 +109,7 @@ public class JSQLService {
      * @return
      * @
      */
-    private String getSQLQuery(Map<String, Object> data) {
+    private String getSQLQuery(Map<String, Object> data) throws JSQLException {
 
         List<HashQueryPair> queries;
 
