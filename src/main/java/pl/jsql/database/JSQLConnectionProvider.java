@@ -76,6 +76,10 @@ public class JSQLConnectionProvider {
 
         Connection transactionalConnection = connections.get(transactionId);
 
+        System.out.println("transactionId : "+transactionId);
+        System.out.println("transactionalConnection : "+transactionalConnection);
+
+
         try {
 
             if (transactionalConnection != null && !transactionalConnection.isClosed()) {
@@ -87,14 +91,14 @@ public class JSQLConnectionProvider {
             throw new JSQLException("JSQL JSQLConnectionProvider.resolveConnection: " + e.getMessage() + " " + e.getSQLState());
         }
 
-        if (transactionalConnection == null) {
-            removeConnection(transactionId);
-            throw new JSQLException("JSQL JSQLConnectionProvider.resolveConnection: Connection for given transaction does not exist");
-        }
+//        if (transactionalConnection == null) {
+//            removeConnection(transactionId);
+//            throw new JSQLException("JSQL JSQLConnectionProvider.resolveConnection: Connection for given transaction does not exist");
+//        }
 
         try {
 
-            if (transactionalConnection.isClosed()) {
+            if (transactionalConnection != null && transactionalConnection.isClosed()) {
                 removeConnection(transactionalConnection, transactionId);
                 throw new JSQLException("JSQL JSQLConnectionProvider.resolveConnection: Connection for given transaction is closed");
             }
@@ -107,9 +111,7 @@ public class JSQLConnectionProvider {
         transactionalConnection = this.getConnection();
 
         try {
-
             transactionalConnection.setAutoCommit(false);
-
         } catch (SQLException e) {
             e.printStackTrace();
             throw new JSQLException("JSQL JSQLConnectionProvider.resolveConnection: " + e.getMessage() + " " + e.getSQLState());

@@ -41,6 +41,8 @@ public class JSQLInsertExecutor {
                     finalSql = JSQLUtils.buildReturningId(finalSql);
                     ps = connection.prepareStatement(finalSql);
 
+                    System.out.println("finalSql : "+finalSql);
+
                     for (Map.Entry<Integer, Object> entry : psParams.entrySet()) {
                         ps.setObject(entry.getKey(), entry.getValue());
                     }

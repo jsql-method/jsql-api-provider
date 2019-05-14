@@ -2,6 +2,12 @@ package pl.jsql.service;
 
 public class JSQLUtils {
 
+    public static Object getAnnotatedTypeValue(String value){
+        //konwertowanie wartości z typem na wartość obiektową
+        // np konwertuje timestamp@1234123 na new Timestmap etc
+        return null;
+    }
+
     public static String toCamelCase(String str) {
         String[] parts = str.split("_");
         String camelCaseString = "";
