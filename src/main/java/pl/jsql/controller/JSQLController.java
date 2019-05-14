@@ -18,7 +18,7 @@ import java.util.Map;
 @RequestMapping("/api/jsql")
 public class JSQLController extends ValidateController {
 
-    private final String TRANSACTION_ID = "TXID";
+    private final String TRANSACTION_ID = "txid";
 
     @Autowired
     private JSQLService jsqlService;
@@ -39,7 +39,7 @@ public class JSQLController extends ValidateController {
     }
 
     @ProviderSecurity
-    @DeleteMapping("/delete")
+    @PostMapping("/delete")
     public ResponseEntity delete(@RequestBody Map<String, Object> data, @RequestHeader(value = TRANSACTION_ID, required = false) String transactionId, HttpServletResponse response) throws JSQLException {
 
         TransactionThread transactionThread = new TransactionThread(data, transactionId);
@@ -84,13 +84,24 @@ public class JSQLController extends ValidateController {
     }
 
     @ProviderSecurity
-    @GetMapping("/commit")
+    @PostMapping("/rollback")
+    public ResponseEntity rollback(@RequestHeader(TRANSACTION_ID) String transactionId) throws JSQLException {
+
+        TransactionThread transactionThread = new TransactionThread(transactionId);
+        transactionThread.response = jsqlService.rollbackTransaction(transactionThread);
+
+        return new ResponseEntity<>(transactionThread.response, HttpStatus.OK);
+
+    }
+
+    @ProviderSecurity
+    @PostMapping("/commit")
     public ResponseEntity commit(@RequestHeader(TRANSACTION_ID) String transactionId) throws JSQLException {
 
         TransactionThread transactionThread = new TransactionThread(transactionId);
-        jsqlService.commitTransaction(transactionThread);
+        transactionThread.response = jsqlService.commitTransaction(transactionThread);
 
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(transactionThread.response, HttpStatus.OK);
 
     }
 
