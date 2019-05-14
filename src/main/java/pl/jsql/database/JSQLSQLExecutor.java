@@ -112,7 +112,6 @@ public class JSQLSQLExecutor {
         List<Map<String, Object>> response = new ArrayList<>();
         Map<String, Object> responseObject = new HashMap<>();
 
-
         Connection connection = jsqlConnectionProvider.resolveConnection(transactionThread.transactionId, transactionThread.isTransactional);
 
         try {
@@ -120,13 +119,37 @@ public class JSQLSQLExecutor {
         } catch (SQLException e) {
 
             jsqlConnectionProvider.removeConnection(connection, transactionThread.transactionId);
-            responseObject.put("status", "Error during commiting transaction " + transactionThread.transactionId);
+            responseObject.put("status", "Error during commit transaction " + transactionThread.transactionId);
             return response;
 
         }
 
         jsqlConnectionProvider.removeConnection(connection, transactionThread.transactionId);
 
+
+        responseObject.put("status", "OK");
+        return response;
+
+    }
+
+    public List<Map<String, Object>> rollback(TransactionThread transactionThread) throws JSQLException {
+
+        List<Map<String, Object>> response = new ArrayList<>();
+        Map<String, Object> responseObject = new HashMap<>();
+
+        Connection connection = jsqlConnectionProvider.resolveConnection(transactionThread.transactionId, transactionThread.isTransactional);
+
+        try {
+            connection.rollback();
+        } catch (SQLException e) {
+
+            jsqlConnectionProvider.removeConnection(connection, transactionThread.transactionId);
+            responseObject.put("status", "Error during rollback transaction " + transactionThread.transactionId);
+            return response;
+
+        }
+
+        jsqlConnectionProvider.removeConnection(connection, transactionThread.transactionId);
 
         responseObject.put("status", "OK");
         return response;
@@ -176,6 +199,5 @@ public class JSQLSQLExecutor {
 
         return finalSql;
     }
-
 
 }

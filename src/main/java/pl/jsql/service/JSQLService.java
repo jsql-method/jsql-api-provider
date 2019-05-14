@@ -48,8 +48,13 @@ public class JSQLService {
 
     }
 
-    public void commitTransaction(TransactionThread transactionThread) throws JSQLException {
-        hibernateExecutor.commit(transactionThread);
+    public List<Map<String, Object>> commitTransaction(TransactionThread transactionThread) throws JSQLException {
+        return hibernateExecutor.commit(transactionThread);
+    }
+
+
+    public List<Map<String, Object>> rollbackTransaction(TransactionThread transactionThread) throws JSQLException {
+        return hibernateExecutor.rollback(transactionThread);
     }
 
     /**
