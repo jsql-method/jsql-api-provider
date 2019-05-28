@@ -66,8 +66,6 @@ public class JSQLConnectionProvider {
 
         Connection connection;
 
-        System.out.println("connectionUrl : "+connectionUrl);
-
         try {
             connection = DriverManager.getConnection(connectionUrl, properties);
         } catch (SQLException e) {
