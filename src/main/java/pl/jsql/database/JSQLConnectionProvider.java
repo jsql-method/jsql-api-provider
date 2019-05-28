@@ -55,7 +55,18 @@ public class JSQLConnectionProvider {
             properties.put("password", password);
         }
 
+        switch (optionsResponse.databaseDialect){
+            case MYSQL:
+                connectionUrl = "jdbc:mysql://" + connectionUrl;
+                break;
+            case POSTGRES:
+                connectionUrl = "jdbc:postgresql://" + connectionUrl;
+                break;
+        }
+
         Connection connection;
+
+        System.out.println("connectionUrl : "+connectionUrl);
 
         try {
             connection = DriverManager.getConnection(connectionUrl, properties);
