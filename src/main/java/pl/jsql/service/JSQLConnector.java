@@ -158,17 +158,19 @@ public class JSQLConnector {
                 throw new JSQLException("HTTP error code : " + conn.getResponseCode() + "\nHTTP error message : " + response);
             }
 
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+//            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+//
+//            StringBuilder builder = new StringBuilder();
+//
+//            while (br.ready()) {
+//                builder.append(br.readLine());
+//            }
 
-            StringBuilder builder = new StringBuilder();
-
-            while (br.ready()) {
-                builder.append(br.readLine());
-            }
+            String response = readInputStreamToString(conn);
 
             conn.disconnect();
 
-            return builder.toString();
+            return response;
 
 
         } catch (Exception e) {
@@ -182,6 +184,38 @@ public class JSQLConnector {
 
         }
 
+    }
+
+    private static String readInputStreamToString(HttpURLConnection connection) {
+        String result = null;
+        StringBuffer sb = new StringBuffer();
+        InputStream is = null;
+
+        try {
+            is = new BufferedInputStream(connection.getInputStream());
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            String inputLine = "";
+            while ((inputLine = br.readLine()) != null) {
+                sb.append(inputLine);
+            }
+            result = sb.toString();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            result = null;
+        }
+        finally {
+            if (is != null) {
+                try {
+                    is.close();
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return result;
     }
 
 }
