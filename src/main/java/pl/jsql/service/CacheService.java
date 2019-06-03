@@ -14,20 +14,20 @@ public class CacheService {
 
     private HashMap<String, Object> cache = new HashMap<>();
 
-    public void cache(CacheType cacheType, Object object){
+    public void cache(CacheType cacheType, Object object, String apiKey){
 
         if(object != null){
-            this.cache.put(securityService.getApiKey()+cacheType.toString(), object);
+            this.cache.put(apiKey+cacheType.toString(), object);
         }
 
     }
 
-    public Object get(CacheType cacheType){
-        return this.cache.get(securityService.getApiKey()+cacheType.toString());
+    public Object get(CacheType cacheType, String apiKey){
+        return this.cache.get(apiKey+cacheType.toString());
     }
 
-    public boolean exists(CacheType cacheType){
-        return this.cache.containsKey(securityService.getApiKey()+cacheType.toString());
+    public boolean exists(CacheType cacheType, String apiKey){
+        return this.cache.containsKey(apiKey+cacheType.toString());
     }
 
     public void cleanAll(){

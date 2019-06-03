@@ -5,7 +5,10 @@ import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import pl.jsql.dto.*;
+import pl.jsql.dto.BasicResponseWithHashQueryPair;
+import pl.jsql.dto.BasicResponseWithOptionsResponse;
+import pl.jsql.dto.HashQueryPair;
+import pl.jsql.dto.OptionsResponse;
 import pl.jsql.enums.CacheType;
 import pl.jsql.exceptions.JSQLException;
 
@@ -13,8 +16,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -66,10 +67,10 @@ public class JSQLConnector {
 
     }
 
-    public OptionsResponse requestOptions() throws JSQLException {
+    public OptionsResponse requestOptions(String apiKey) throws JSQLException {
 
-        if (cacheService.exists(CacheType.OPTIONS)) {
-            return (OptionsResponse) cacheService.get(CacheType.OPTIONS);
+        if (cacheService.exists(CacheType.OPTIONS, apiKey)) {
+            return (OptionsResponse) cacheService.get(CacheType.OPTIONS, apiKey);
         }
 
         OptionsResponse optionsResponse = null;
@@ -84,10 +85,14 @@ public class JSQLConnector {
             }
         }
 
-        cacheService.cache(CacheType.OPTIONS, optionsResponse);
+        cacheService.cache(CacheType.OPTIONS, optionsResponse, apiKey);
 
         return optionsResponse;
 
+    }
+
+    public OptionsResponse requestOptions() throws JSQLException {
+        return this.requestOptions(securityService.getApiKey());
     }
 
     public String call(String fullUrl, String method) throws JSQLException {
@@ -117,59 +122,28 @@ public class JSQLConnector {
                 OutputStream os = conn.getOutputStream();
 
                 os.write(new Gson().toJson(request).getBytes());
-                System.out.println("request: " + new Gson().toJson(request));
-
                 os.flush();
 
             }
 
-            System.out.println("fullUrl: " + fullUrl);
-            System.out.println("method: " + method);
-
-            System.out.println("conn.getResponseCode(): " + conn.getResponseCode());
-
             if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
 
-                System.out.println("conn: " + conn);
+                if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
 
-                System.out.println("conn.getErrorStream(): " + conn.getErrorStream());
-
-                InputStream inputStream = conn.getErrorStream();
-
-                if (inputStream == null) {
+                    String response = readInputStreamToString(conn, true);
                     conn.disconnect();
-                    throw new JSQLException("HTTP error code : " + conn.getResponseCode());
+
+                    if (response.length() > 0 && response.contains("<div>")) {
+                        response = response.substring(response.lastIndexOf("</div><div>") + 11, response.lastIndexOf("</div></body></html>"));
+                    }
+
+                    throw new JSQLException("HTTP error code : " + conn.getResponseCode() + "\nHTTP error message : " + response);
                 }
 
-                BufferedReader br = new BufferedReader(new InputStreamReader((conn.getErrorStream())));
-                StringBuilder builder = new StringBuilder();
-                while (br.ready()) {
-                    builder.append(br.readLine());
-                }
-
-                conn.disconnect();
-
-                String response = builder.toString().trim();
-
-                if (response.length() > 0 && response.contains("<div>")) {
-                    response = response.substring(response.lastIndexOf("</div><div>") + 11, response.lastIndexOf("</div></body></html>"));
-                }
-
-                throw new JSQLException("HTTP error code : " + conn.getResponseCode() + "\nHTTP error message : " + response);
             }
 
-//            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-//
-//            StringBuilder builder = new StringBuilder();
-//
-//            while (br.ready()) {
-//                builder.append(br.readLine());
-//            }
-
-            String response = readInputStreamToString(conn);
-
+            String response = readInputStreamToString(conn, false);
             conn.disconnect();
-
             return response;
 
 
@@ -186,13 +160,13 @@ public class JSQLConnector {
 
     }
 
-    private static String readInputStreamToString(HttpURLConnection connection) {
+    private static String readInputStreamToString(HttpURLConnection connection, boolean error) {
         String result = null;
         StringBuffer sb = new StringBuffer();
         InputStream is = null;
 
         try {
-            is = new BufferedInputStream(connection.getInputStream());
+            is = new BufferedInputStream(error ? connection.getErrorStream() : connection.getInputStream());
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
             String inputLine = "";
             while ((inputLine = br.readLine()) != null) {
