@@ -37,11 +37,9 @@ public class CacheJob {
                 if(optionsResponse.prod && counters.get(cacheKey) == MINUTES){
                     cacheService.cleanAll();
                     counters.put(cacheKey, 0);
-                    System.out.println("clearing cache prod");
                 }else if(counters.get(cacheKey) == 1){
                     cacheService.cleanAll();
                     counters.put(cacheKey, 0);
-                    System.out.println("clearing cache dev");
                 }
 
                 counters.put(cacheKey, counters.get(cacheKey)+1);

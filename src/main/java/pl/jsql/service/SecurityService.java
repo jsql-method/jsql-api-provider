@@ -25,4 +25,8 @@ public class SecurityService {
         return request.getHeader(ProviderSecurityInterceptor.DEV_KEY_HEADER);
     }
 
+    public String getKey() {
+        return this.getApiKey()+"-";
+    }
+
 }
