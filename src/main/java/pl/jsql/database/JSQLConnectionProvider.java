@@ -5,13 +5,12 @@ import org.springframework.stereotype.Service;
 import pl.jsql.dto.OptionsResponse;
 import pl.jsql.exceptions.JSQLException;
 import pl.jsql.service.JSQLConnector;
+import pl.jsql.service.SecurityService;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 @Service
 public class JSQLConnectionProvider {
@@ -19,7 +18,37 @@ public class JSQLConnectionProvider {
     @Autowired
     private JSQLConnector jsqlConnector;
 
+    @Autowired
+    private SecurityService securityService;
+
     private static Map<String, Connection> connections = new HashMap<>();
+    private static Map<String, Long> connectionsTime = new HashMap<>();
+
+    private static final Long MINUTE = 10*1000L;
+
+    public void clearUnusedConnections() throws JSQLException {
+
+        System.out.println("in: "+connections.size());
+        System.out.println("in2: "+connectionsTime.size());
+
+        Iterator it = connectionsTime.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+
+            Long time = (Long) pair.getValue();
+            Long now = new Date().getTime();
+
+            if(now - time > MINUTE){
+                removeConnection(connections.get(pair.getKey()), (String) pair.getKey());
+                it.remove();
+            }
+
+        }
+
+        System.out.println("out: "+connections.size());
+        System.out.println("out2: "+connectionsTime.size());
+
+    }
 
     private Connection getConnection() throws JSQLException {
 
@@ -83,15 +112,13 @@ public class JSQLConnectionProvider {
             return this.getConnection();
         }
 
-        Connection transactionalConnection = connections.get(transactionId);
-
-        System.out.println("transactionId : "+transactionId);
-        System.out.println("transactionalConnection : "+transactionalConnection);
+        Connection transactionalConnection = connections.get(securityService.getKey()+transactionId);
 
 
         try {
 
             if (transactionalConnection != null && !transactionalConnection.isClosed()) {
+                connectionsTime.put(transactionId, new Date().getTime());
                 return transactionalConnection;
             }
 
@@ -127,7 +154,8 @@ public class JSQLConnectionProvider {
         }
 
 
-        connections.put(transactionId, transactionalConnection);
+        connections.put(securityService.getKey()+transactionId, transactionalConnection);
+        connectionsTime.put(securityService.getKey()+transactionId, new Date().getTime());
 
         return transactionalConnection;
 
@@ -150,7 +178,9 @@ public class JSQLConnectionProvider {
 
     public void removeConnection(Connection connection, String transactionId) throws JSQLException {
 
-        OptionsResponse optionsResponse = jsqlConnector.requestOptions();
+        String apiKey = transactionId.substring(0, transactionId.lastIndexOf("-"));
+
+        OptionsResponse optionsResponse = jsqlConnector.requestOptions(apiKey);
         Integer connectionTimeout;
 
         if(optionsResponse.prod){
@@ -174,7 +204,7 @@ public class JSQLConnectionProvider {
                     connection.close();
                 }
 
-                connections.remove(transactionId);
+                this.removeConnection(transactionId);
 
             } catch (SQLException | InterruptedException e) {
                 e.printStackTrace();
@@ -186,6 +216,7 @@ public class JSQLConnectionProvider {
 
     private void removeConnection(String transactionId) {
         connections.remove(transactionId);
+        connectionsTime.remove(transactionId);
     }
 
 }
