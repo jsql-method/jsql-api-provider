@@ -28,9 +28,6 @@ public class JSQLConnectionProvider {
 
     public void clearUnusedConnections() throws JSQLException {
 
-        System.out.println("in: "+connections.size());
-        System.out.println("in2: "+connectionsTime.size());
-
         Iterator it = connectionsTime.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry)it.next();
@@ -44,9 +41,6 @@ public class JSQLConnectionProvider {
             }
 
         }
-
-        System.out.println("out: "+connections.size());
-        System.out.println("out2: "+connectionsTime.size());
 
     }
 
