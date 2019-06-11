@@ -37,10 +37,10 @@ public class JSQLService {
 
         String sql = this.getSQLQuery(transactionThread.request);
 
-        String queryType = queryTypeEnum.toLower();
-        if (sql != null && !sql.trim().toLowerCase().startsWith(queryType)) {
-            throw new JSQLException("JSQL JSQLService." + queryType + ": This method accepts only " + queryType + " statements");
-        }
+//        String queryType = queryTypeEnum.toLower();
+//        if (sql != null && !sql.trim().toLowerCase().startsWith(queryType)) {
+//            throw new JSQLException("JSQL JSQLService." + queryType + ": This method accepts only " + queryType + " statements");
+//        }
 
         Map<String, Object> params = this.getParamsMap(transactionThread.request);
 
