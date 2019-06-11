@@ -2,9 +2,11 @@ package pl.jsql.database;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pl.jsql.dto.Keys;
 import pl.jsql.dto.OptionsResponse;
 import pl.jsql.exceptions.JSQLException;
 import pl.jsql.service.JSQLConnector;
+import pl.jsql.service.JSQLUtils;
 import pl.jsql.service.SecurityService;
 
 import java.sql.Connection;
@@ -23,28 +25,32 @@ public class JSQLConnectionProvider {
 
     private static Map<String, Connection> connections = new HashMap<>();
     private static Map<String, Long> connectionsTime = new HashMap<>();
+    private static Map<String, Keys> connectionKeys = new HashMap<>();
 
-    private static final Long MINUTE = 10*1000L;
+    private static final Long DELAY = 10 * 1000L; //10 sec
 
     public void clearUnusedConnections() throws JSQLException {
 
         Iterator it = connectionsTime.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
+            Map.Entry pair = (Map.Entry) it.next();
 
             Long time = (Long) pair.getValue();
             Long now = new Date().getTime();
 
-            if(now - time > MINUTE){
+            if (now - time > DELAY) {
                 removeConnection(connections.get(pair.getKey()), (String) pair.getKey());
                 it.remove();
             }
 
         }
 
+        System.out.println("Existing connections: "+connections.size());
+        System.out.println("Connections timings: "+connectionsTime.size());
+
     }
 
-    private Connection getConnection() throws JSQLException {
+    private Connection getConnection(boolean saveInMap) throws JSQLException {
 
         OptionsResponse optionsResponse = jsqlConnector.requestOptions();
 
@@ -63,22 +69,22 @@ public class JSQLConnectionProvider {
         String password;
         String connectionUrl;
 
-        if(optionsResponse.prod){
+        if (optionsResponse.prod) {
             username = optionsResponse.productionDatabaseOptions.databaseConnectionUsername;
             password = optionsResponse.productionDatabaseOptions.databaseConnectionPassword;
             connectionUrl = optionsResponse.productionDatabaseOptions.databaseConnectionUrl;
-        }else{
+        } else {
             username = optionsResponse.developerDatabaseOptions.databaseConnectionUsername;
             password = optionsResponse.developerDatabaseOptions.databaseConnectionPassword;
             connectionUrl = optionsResponse.developerDatabaseOptions.databaseConnectionUrl;
         }
 
-        if(username != null && password != null){
+        if (username != null && password != null) {
             properties.put("user", username);
             properties.put("password", password);
         }
 
-        switch (optionsResponse.databaseDialect){
+        switch (optionsResponse.databaseDialect) {
             case MYSQL:
                 connectionUrl = "jdbc:mysql://" + connectionUrl;
                 break;
@@ -96,6 +102,13 @@ public class JSQLConnectionProvider {
             throw new JSQLException("JSQL JSQLConnectionProvider.getConnection: " + e.getMessage() + " " + e.getSQLState());
         }
 
+        if(saveInMap){
+            String connectionUuid = JSQLUtils.uuid();
+            connectionsTime.put(connectionUuid, new Date().getTime());
+            connections.put(connectionUuid, connection);
+            connectionKeys.put(connectionUuid, new Keys(securityService.getApiKey(), securityService.getDevKey()));
+        }
+
         return connection;
 
     }
@@ -103,11 +116,10 @@ public class JSQLConnectionProvider {
     public Connection resolveConnection(String transactionId, Boolean isTransaction) throws JSQLException {
 
         if (!isTransaction) {
-            return this.getConnection();
+            return this.getConnection(true);
         }
 
-        Connection transactionalConnection = connections.get(securityService.getKey()+transactionId);
-
+        Connection transactionalConnection = connections.get(transactionId);
 
         try {
 
@@ -138,7 +150,7 @@ public class JSQLConnectionProvider {
             throw new JSQLException("JSQL JSQLConnectionProvider.resolveConnection: " + e.getMessage() + " " + e.getSQLState());
         }
 
-        transactionalConnection = this.getConnection();
+        transactionalConnection = this.getConnection(false);
 
         try {
             transactionalConnection.setAutoCommit(false);
@@ -148,8 +160,9 @@ public class JSQLConnectionProvider {
         }
 
 
-        connections.put(securityService.getKey()+transactionId, transactionalConnection);
-        connectionsTime.put(securityService.getKey()+transactionId, new Date().getTime());
+        connections.put(transactionId, transactionalConnection);
+        connectionsTime.put(transactionId, new Date().getTime());
+        connectionKeys.put(transactionId, new Keys(securityService.getApiKey(), securityService.getDevKey()));
 
         return transactionalConnection;
 
@@ -159,27 +172,36 @@ public class JSQLConnectionProvider {
 
         try {
 
-            if(!connection.isClosed()){
+            if (!connection.isClosed()) {
                 connection.close();
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
             throw new JSQLException("JSQL JSQLConnectionProvider.removeConnection: " + e.getMessage() + " " + e.getSQLState());
+        }finally {
+
+            try {
+                connection.close();
+            } catch (Exception ex) {
+                System.out.println("Could not remove connection");
+                ex.printStackTrace();
+            }
+
         }
 
     }
 
     public void removeConnection(Connection connection, String transactionId) throws JSQLException {
 
-        String apiKey = transactionId.substring(0, transactionId.lastIndexOf("-"));
+        Keys keys = connectionKeys.get(transactionId);
 
-        OptionsResponse optionsResponse = jsqlConnector.requestOptions(apiKey);
+        OptionsResponse optionsResponse = jsqlConnector.requestOptions(keys.apiKey, keys.devKey);
         Integer connectionTimeout;
 
-        if(optionsResponse.prod){
+        if (optionsResponse.prod) {
             connectionTimeout = optionsResponse.productionDatabaseOptions.databaseConnectionTimeout;
-        }else{
+        } else {
             connectionTimeout = optionsResponse.developerDatabaseOptions.databaseConnectionTimeout;
         }
 
@@ -189,8 +211,7 @@ public class JSQLConnectionProvider {
 
             try {
 
-
-                Thread.sleep(finalConnectionTimeout *1000);
+                Thread.sleep(finalConnectionTimeout * 1000);
 
                 if (!connection.isClosed()) {
 
@@ -202,6 +223,15 @@ public class JSQLConnectionProvider {
 
             } catch (SQLException | InterruptedException e) {
                 e.printStackTrace();
+            } finally {
+
+                try {
+                    connection.close();
+                } catch (Exception ex) {
+                    System.out.println("Could not remove connection");
+                    ex.printStackTrace();
+                }
+
             }
 
         }).start();
