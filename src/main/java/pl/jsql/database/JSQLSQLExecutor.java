@@ -41,6 +41,7 @@ public class JSQLSQLExecutor {
 
     public void executeQuery(JSQLQueryTypeEnum queryTypeEnum, String sql, Map<String, Object> params, TransactionThread transactionThread) throws JSQLException {
 
+        System.out.println("transactionThread.transactionId : "+transactionThread.transactionId);
         Connection connection = jsqlConnectionProvider.resolveConnection(transactionThread.transactionId, transactionThread.isTransactional);
 
         String finalSql = sql;
@@ -121,13 +122,13 @@ public class JSQLSQLExecutor {
             connection.commit();
         } catch (SQLException e) {
 
-            jsqlConnectionProvider.removeConnection(connection, securityService.getKey()+transactionThread.transactionId);
-            responseObject.put("status", "Error during commit transaction " + securityService.getKey()+transactionThread.transactionId);
+            jsqlConnectionProvider.removeConnection(connection, transactionThread.transactionId);
+            responseObject.put("status", "Error during commit transaction " + transactionThread.transactionId);
             return response;
 
         }
 
-        jsqlConnectionProvider.removeConnection(connection, securityService.getKey()+transactionThread.transactionId);
+        jsqlConnectionProvider.removeConnection(connection, transactionThread.transactionId);
 
 
         responseObject.put("status", "OK");
@@ -142,17 +143,20 @@ public class JSQLSQLExecutor {
 
         Connection connection = jsqlConnectionProvider.resolveConnection(transactionThread.transactionId, transactionThread.isTransactional);
 
+        System.out.println("Rollback transactionId: "+transactionThread.transactionId);
+
         try {
             connection.rollback();
+            System.out.println("Rollback done transactionId: "+transactionThread.transactionId);
         } catch (SQLException e) {
 
-            jsqlConnectionProvider.removeConnection(connection, securityService.getKey()+transactionThread.transactionId);
-            responseObject.put("status", "Error during rollback transaction " + securityService.getKey()+transactionThread.transactionId);
+            jsqlConnectionProvider.removeConnection(connection, transactionThread.transactionId);
+            responseObject.put("status", "Error during rollback transaction " + transactionThread.transactionId);
             return response;
 
         }
 
-        jsqlConnectionProvider.removeConnection(connection, securityService.getKey()+transactionThread.transactionId);
+        jsqlConnectionProvider.removeConnection(connection, transactionThread.transactionId);
 
         responseObject.put("status", "OK");
         return response;
