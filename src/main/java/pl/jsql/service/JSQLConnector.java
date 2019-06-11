@@ -49,7 +49,7 @@ public class JSQLConnector {
         }
 
 
-        String responseJSON = this.call(fullUrl, hashesList, "POST");
+        String responseJSON = this.call(fullUrl, hashesList, "POST", securityService.getApiKey(), securityService.getDevKey());
 
         if (!responseJSON.isEmpty()) {
             try {
@@ -67,14 +67,14 @@ public class JSQLConnector {
 
     }
 
-    public OptionsResponse requestOptions(String apiKey) throws JSQLException {
+    public OptionsResponse requestOptions(String apiKey, String devKey) throws JSQLException {
 
         if (cacheService.exists(CacheType.OPTIONS, apiKey)) {
             return (OptionsResponse) cacheService.get(CacheType.OPTIONS, apiKey);
         }
 
         OptionsResponse optionsResponse = null;
-        String responseJSON = this.call(origin + requestOptions, "GET");
+        String responseJSON = this.call(origin + requestOptions, "GET", apiKey, devKey);
 
         if (!responseJSON.isEmpty()) {
             try {
@@ -92,14 +92,14 @@ public class JSQLConnector {
     }
 
     public OptionsResponse requestOptions() throws JSQLException {
-        return this.requestOptions(securityService.getApiKey());
+        return this.requestOptions(securityService.getApiKey(), securityService.getDevKey());
     }
 
-    public String call(String fullUrl, String method) throws JSQLException {
-        return this.call(fullUrl, null, method);
+    public String call(String fullUrl, String method, String apiKey, String devKey) throws JSQLException {
+        return this.call(fullUrl, null, method, apiKey, devKey);
     }
 
-    public String call(String fullUrl, Object request, String method) throws JSQLException {
+    public String call(String fullUrl, Object request, String method, String apiKey, String devKey) throws JSQLException {
 
         HttpURLConnection conn = null;
 
@@ -113,8 +113,8 @@ public class JSQLConnector {
 
             conn.setRequestMethod(method);
             conn.setRequestProperty("Content-Type", "application/json");
-            conn.setRequestProperty("Api-Key", securityService.getApiKey());
-            conn.setRequestProperty("Dev-Key", securityService.getDevKey());
+            conn.setRequestProperty("Api-Key", apiKey);
+            conn.setRequestProperty("Dev-Key", devKey);
             conn.setUseCaches(false);
 
             if (method.equals("POST")) {

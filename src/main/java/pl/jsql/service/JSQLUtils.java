@@ -1,12 +1,11 @@
 package pl.jsql.service;
 
-public class JSQLUtils {
+import org.apache.commons.codec.digest.DigestUtils;
 
-    public static Object getAnnotatedTypeValue(String value){
-        //konwertowanie wartości z typem na wartość obiektową
-        // np konwertuje timestamp@1234123 na new Timestmap etc
-        return null;
-    }
+import java.util.Date;
+import java.util.UUID;
+
+public class JSQLUtils {
 
     public static String toCamelCase(String str) {
         String[] parts = str.split("_");
@@ -28,6 +27,18 @@ public class JSQLUtils {
             sql += " RETURNING id";
         }
         return sql;
+    }
+
+    public static String uuid() {
+        return generateToken(String.valueOf(UUID.randomUUID())+new Date().getTime());
+    }
+
+    public static String generateToken(String name) {
+        return encode(name + UUID.randomUUID());
+    }
+
+    public static String encode(String name) {
+        return DigestUtils.sha256Hex(name);
     }
 
 
