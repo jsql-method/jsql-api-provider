@@ -37,6 +37,8 @@ public class JSQLService {
 
         String sql = this.getSQLQuery(transactionThread.request);
 
+        System.out.println("sql : "+sql);
+
 //        String queryType = queryTypeEnum.toLower();
 //        if (sql != null && !sql.trim().toLowerCase().startsWith(queryType)) {
 //            throw new JSQLException("JSQL JSQLService." + queryType + ": This method accepts only " + queryType + " statements");
@@ -69,12 +71,23 @@ public class JSQLService {
         if (data.get(HASH_NAME) instanceof String) {
 
             List<String> list = new ArrayList<>();
-            list.add((String) data.get(HASH_NAME));
+            String hash = (String) data.get(HASH_NAME);
+            list.add(hash.trim());
 
             return list;
+        }else{
+
+            List<String> hashes = (List<String>) data.get(HASH_NAME);
+            List<String> hashes2 = new ArrayList<>();
+
+            for(String hash : hashes){
+                hashes2.add(hash.trim());
+            }
+
+            return hashes2;
+
         }
 
-        return (List<String>) data.get(HASH_NAME);
     }
 
     /**
