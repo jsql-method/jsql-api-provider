@@ -10,8 +10,9 @@ variables:
 
 stages:
   - build
-  - "create image"
-  - "deploy service"
+  - create image
+  - deploy service
+  - deploy test app
 
 .build_gradle_template: &build_ref
   stage: build
