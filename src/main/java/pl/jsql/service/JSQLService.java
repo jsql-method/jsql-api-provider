@@ -34,8 +34,6 @@ public class JSQLService {
 
         String sql = this.getSQLQuery(transactionThread.request);
 
-        System.out.println("sql : "+sql);
-
 //        String queryType = queryTypeEnum.toLower();
 //        if (sql != null && !sql.trim().toLowerCase().startsWith(queryType)) {
 //            throw new JSQLException("JSQL JSQLService." + queryType + ": This method accepts only " + queryType + " statements");

@@ -69,8 +69,12 @@ public class JSQLConnector {
 
     public OptionsResponse requestOptions(String apiKey, String devKey) throws JSQLException {
 
-        if (cacheService.exists(CacheType.OPTIONS, apiKey)) {
-            return (OptionsResponse) cacheService.get(CacheType.OPTIONS, apiKey);
+        if(cacheService.exists(CacheType.OPTIONS_PROD, apiKey, devKey)){
+            return (OptionsResponse) cacheService.get(CacheType.OPTIONS_PROD, apiKey, devKey);
+        }
+
+        if (cacheService.exists(CacheType.OPTIONS_DEV, apiKey, devKey)) {
+            return (OptionsResponse) cacheService.get(CacheType.OPTIONS_DEV, apiKey, devKey);
         }
 
         OptionsResponse optionsResponse = null;
@@ -85,7 +89,12 @@ public class JSQLConnector {
             }
         }
 
-        cacheService.cache(CacheType.OPTIONS, optionsResponse, apiKey);
+        if(optionsResponse.isProductionDeveloper){
+            cacheService.cache(CacheType.OPTIONS_PROD, optionsResponse, apiKey, devKey);
+        }else{
+            cacheService.cache(CacheType.OPTIONS_DEV, optionsResponse, apiKey, devKey);
+        }
+
 
         return optionsResponse;
 

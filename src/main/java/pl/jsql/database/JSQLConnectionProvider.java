@@ -45,9 +45,6 @@ public class JSQLConnectionProvider {
 
         }
 
-        System.out.println("Existing connections: "+connections.size());
-        System.out.println("Connections timings: "+connectionsTime.size());
-
     }
 
     private Connection getConnection(boolean saveInMap) throws JSQLException {
@@ -69,7 +66,7 @@ public class JSQLConnectionProvider {
         String password;
         String connectionUrl;
 
-        if (optionsResponse.prod) {
+        if (optionsResponse.isProductionDeveloper) {
             username = optionsResponse.productionDatabaseOptions.databaseConnectionUsername;
             password = optionsResponse.productionDatabaseOptions.databaseConnectionPassword;
             connectionUrl = optionsResponse.productionDatabaseOptions.databaseConnectionUrl;
@@ -199,7 +196,7 @@ public class JSQLConnectionProvider {
         OptionsResponse optionsResponse = jsqlConnector.requestOptions(keys.apiKey, keys.devKey);
         Integer connectionTimeout;
 
-        if (optionsResponse.prod) {
+        if (optionsResponse.isProductionDeveloper) {
             connectionTimeout = optionsResponse.productionDatabaseOptions.databaseConnectionTimeout;
         } else {
             connectionTimeout = optionsResponse.developerDatabaseOptions.databaseConnectionTimeout;
