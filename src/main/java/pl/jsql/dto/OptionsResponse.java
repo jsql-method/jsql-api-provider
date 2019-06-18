@@ -7,6 +7,8 @@ public class OptionsResponse {
 
     public String apiKey;
 
+    public Boolean isProductionDeveloper;
+
     public EncodingEnum encodingAlgorithm;
 
     public Boolean isSalt;
@@ -31,7 +33,7 @@ public class OptionsResponse {
 
     public Boolean allowedPlainQueries;
 
-    public Boolean prod;
+    public Boolean prodCache;
 
     public String randomSaltBefore;
 
