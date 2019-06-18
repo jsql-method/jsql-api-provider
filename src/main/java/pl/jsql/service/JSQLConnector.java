@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import pl.jsql.ApiProviderApplication;
 import pl.jsql.dto.BasicResponseWithHashQueryPair;
 import pl.jsql.dto.BasicResponseWithOptionsResponse;
 import pl.jsql.dto.HashQueryPair;
@@ -87,6 +88,17 @@ public class JSQLConnector {
                 e.printStackTrace();
                 throw new JSQLException("JSQL JSQLConnector.requestOptions: " + e.getMessage());
             }
+        }else{
+            throw new JSQLException("JSQL JSQLConnector.requestOptions: empty");
+        }
+
+        if(ApiProviderApplication.isLocalVersion){
+
+            if(!optionsResponse.developerDatabaseOptions.databaseConnectionUrl.contains("localhost") &&
+                    !optionsResponse.developerDatabaseOptions.databaseConnectionUrl.contains("127.0.0.1")){
+                throw new JSQLException("JSQL JSQLConnector.requestOptions: Could not find local database valid connection url");
+            }
+
         }
 
         if(optionsResponse.isProductionDeveloper){

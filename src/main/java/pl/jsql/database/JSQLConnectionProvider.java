@@ -2,6 +2,7 @@ package pl.jsql.database;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pl.jsql.ApiProviderApplication;
 import pl.jsql.dto.Keys;
 import pl.jsql.dto.OptionsResponse;
 import pl.jsql.exceptions.JSQLException;
@@ -66,7 +67,7 @@ public class JSQLConnectionProvider {
         String password;
         String connectionUrl;
 
-        if (optionsResponse.isProductionDeveloper) {
+        if (optionsResponse.isProductionDeveloper && !ApiProviderApplication.isLocalVersion) {
             username = optionsResponse.productionDatabaseOptions.databaseConnectionUsername;
             password = optionsResponse.productionDatabaseOptions.databaseConnectionPassword;
             connectionUrl = optionsResponse.productionDatabaseOptions.databaseConnectionUrl;
