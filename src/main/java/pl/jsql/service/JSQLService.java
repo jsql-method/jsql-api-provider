@@ -8,10 +8,7 @@ import pl.jsql.dto.TransactionThread;
 import pl.jsql.enums.JSQLQueryTypeEnum;
 import pl.jsql.exceptions.JSQLException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class JSQLService {
@@ -36,8 +33,6 @@ public class JSQLService {
     public void query(TransactionThread transactionThread, JSQLQueryTypeEnum queryTypeEnum) throws JSQLException {
 
         String sql = this.getSQLQuery(transactionThread.request);
-
-        System.out.println("sql : "+sql);
 
 //        String queryType = queryTypeEnum.toLower();
 //        if (sql != null && !sql.trim().toLowerCase().startsWith(queryType)) {
@@ -98,12 +93,14 @@ public class JSQLService {
      * @param data
      * @return
      */
-    private Map<String, Object> getParamsMap(Map<String, Object> data) {
+    private TreeMap<String, Object> getParamsMap(Map<String, Object> data) {
 
         Object params = data.get(PARAMS_NAME);
 
+        Map<String, Object> paramsMap = new HashMap<>();
+
         if (params instanceof Map) {
-            return (Map<String, Object>) params;
+            paramsMap = (Map<String, Object>) params;
         } else if (params instanceof List) {
 
             Map<String, Object> map = new HashMap<>();
@@ -112,11 +109,25 @@ public class JSQLService {
                 map.put(String.valueOf(i), o);
                 i++;
             }
-            return map;
+
+            paramsMap = map;
 
         }
 
-        return new HashMap<>();
+        TreeMap<String, Object> treeMap = new TreeMap<>(
+                (s1, s2) -> {
+                    if (s1.length() > s2.length()) {
+                        return -1;
+                    } else if (s1.length() < s2.length()) {
+                        return 1;
+                    } else {
+                        return s1.compareTo(s2);
+                    }
+                });
+
+        treeMap.putAll(paramsMap);
+
+        return treeMap;
     }
 
     /**

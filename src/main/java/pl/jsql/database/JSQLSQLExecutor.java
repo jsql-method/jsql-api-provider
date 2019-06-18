@@ -41,25 +41,15 @@ public class JSQLSQLExecutor {
 
     public void executeQuery(JSQLQueryTypeEnum queryTypeEnum, String sql, Map<String, Object> params, TransactionThread transactionThread) throws JSQLException {
 
-        System.out.println("transactionThread.transactionId : "+transactionThread.transactionId);
         Connection connection = jsqlConnectionProvider.resolveConnection(transactionThread.transactionId, transactionThread.isTransactional);
 
         String finalSql = sql;
 
-        System.out.println("finalSql : "+finalSql);
-
         Map<Integer, Object> psParams = new HashMap<>();
-
-        System.out.println("transactionThread.paramsAsArray : "+transactionThread.paramsAsArray);
 
         if (!transactionThread.paramsAsArray) {
             finalSql = substituteParams(sql, params);
-
-            System.out.println("finalSql : "+finalSql);
-
             psParams = getParamsMap(sql, params);
-
-
         } else {
 
             for (Map.Entry<String, Object> entry : params.entrySet()) {
@@ -67,8 +57,6 @@ public class JSQLSQLExecutor {
             }
 
         }
-
-        System.out.println("finalSql2 : "+finalSql);
 
         PreparedStatement ps;
 
@@ -155,11 +143,8 @@ public class JSQLSQLExecutor {
 
         Connection connection = jsqlConnectionProvider.resolveConnection(transactionThread.transactionId, transactionThread.isTransactional);
 
-        System.out.println("Rollback transactionId: "+transactionThread.transactionId);
-
         try {
             connection.rollback();
-            System.out.println("Rollback done transactionId: "+transactionThread.transactionId);
         } catch (SQLException e) {
 
             jsqlConnectionProvider.removeConnection(connection, transactionThread.transactionId);
@@ -186,8 +171,6 @@ public class JSQLSQLExecutor {
             if (param.contains(":") && !param.contains("'") && !param.contains("\"") && !param.contains("`")) {
                 String cleanParam = param.substring(param.indexOf(':'));
                 cleanParam = StringUtils.trimAllWhitespace(cleanParam.replaceAll("[=;,:()]", ""));
-                System.out.println("cleanParam : "+cleanParam);
-                System.out.println("params.get(cleanParam) : "+params.get(cleanParam));
                 paramsMapWithIndex.put(index, params.get(cleanParam));
                 index++;
             }

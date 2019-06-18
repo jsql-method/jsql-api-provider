@@ -4,10 +4,15 @@ cache:
      - .gradle/wrapper
      - .gradle/caches
 
+variables:
+# CICD USER TOKEN
+  TOKEN: utCGxpkEd3kAX5dLwhF-
+
 stages:
   - build
-  - "create image"
-  - "deploy service"
+  - create image
+  - deploy service
+  - deploy test app
 
 .build_gradle_template: &build_ref
   stage: build
@@ -51,6 +56,46 @@ stages:
      - docker -H ${ENVIRONMENT_HOST} pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
      - docker -H ${ENVIRONMENT_HOST} service update --force $SERVICE_NAME --image $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
      - docker -H ${ENVIRONMENT_HOST} service scale $SERVICE_NAME=1
+
+
+  #PARAM
+  #TOKEN 
+  #PROJECT_ID 
+  #BRANCH
+.invoke_pipeline: &invoke_pipeline |
+
+  if [ 0 == `curl -s -k --request GET --header "PRIVATE-TOKEN: $TOKEN" --form status=running --form ref=$BRANCH https://gitlab.jsql.it/api/v4/projects/$PROJECT_ID/pipelines | jq length` ] ; then
+          echo "No running pipelines"
+  else
+          echo "Running process exist"
+          return 0
+  fi
+
+  if [ 0 == `curl -s -k --request GET --header "PRIVATE-TOKEN: $TOKEN" --form status=pending --form ref=$BRANCH https://gitlab.jsql.it/api/v4/projects/$PROJECT_ID/pipelines | jq length` ] ; then
+          echo "No pending pipelines"
+  else
+          echo "Pending process exist"
+          return 0
+  fi
+
+  PIPELINE_ID=`curl -s -k --request POST --header "PRIVATE-TOKEN: $TOKEN" --form ref=$BRANCH https://gitlab.jsql.it/api/v4/projects/$PROJECT_ID/pipeline | jq .id`
+  echo "PIPELINE_ID= $PIPELINE_ID"
+
+  while true
+  do
+    STATE=`curl -s -k --request GET --header "PRIVATE-TOKEN: $TOKEN" https://gitlab.jsql.it/api/v4/projects/$PROJECT_ID/pipelines/$PIPELINE_ID  | jq -r .status`
+    echo Status pipeline $PIPELINE_ID: $STATE
+    sleep 10
+    if [ $STATE = success ]  ; then
+      break
+    fi
+    
+    if [ $STATE = failed ] || [ $STATE = null ]  ; then
+      exit 1
+    fi
+  done
+
+
 
 
 build:
@@ -112,3 +157,116 @@ deploy prod:
   only:
     refs:
       - prod
+
+
+########################################################
+# Invoke pipeline test app
+########################################################
+
+jsql-react-test-app:
+  stage: deploy test app
+  image: gempesaw/curl-jq:latest
+  variables:
+    PROJECT_ID: 58
+    BRANCH: test
+  script: 
+    - *invoke_pipeline
+  only:
+    refs:
+      - test
+
+jsql-vue-test-app:
+  stage: deploy test app
+  image: gempesaw/curl-jq:latest
+  variables:
+    PROJECT_ID: 64
+    BRANCH: test
+  script: 
+    - *invoke_pipeline
+  only:
+    refs:
+      - test
+
+jsql-angular7-test-app:
+  stage: deploy test app
+  image: gempesaw/curl-jq:latest
+  variables:
+    PROJECT_ID: 34
+    BRANCH: test
+  script: 
+    - *invoke_pipeline
+  only:
+    refs:
+      - test
+
+jsql-jquery-test-app:
+  stage: deploy test app
+  image: gempesaw/curl-jq:latest
+  variables:
+    PROJECT_ID: 50
+    BRANCH: test
+  script: 
+    - *invoke_pipeline
+  only:
+    refs:
+      - test
+
+jsql-angular1-test-app:
+  stage: deploy test app
+  image: gempesaw/curl-jq:latest
+  variables:
+    PROJECT_ID: 24
+    BRANCH: test
+  script: 
+    - *invoke_pipeline
+  only:
+    refs:
+      - test
+
+jsql-javascript1-test-app:
+  stage: deploy test app
+  image: gempesaw/curl-jq:latest
+  variables:
+    PROJECT_ID: 44
+    BRANCH: test
+  script: 
+    - *invoke_pipeline
+  only:
+    refs:
+      - test
+
+jsql-spring-boot-test-app:
+  stage: deploy test app
+  image: gempesaw/curl-jq:latest
+  variables:
+    PROJECT_ID: 61
+    BRANCH: test
+  script: 
+    - *invoke_pipeline
+  only:
+    refs:
+      - test
+
+jsql-grails-test-app:
+  stage: deploy test app
+  image: gempesaw/curl-jq:latest
+  variables:
+    PROJECT_ID: 40
+    BRANCH: test
+  script: 
+    - *invoke_pipeline
+  only:
+    refs:
+      - test
+
+jsql-node-test-app:
+  stage: deploy test app
+  image: gempesaw/curl-jq:latest
+  variables:
+    PROJECT_ID: 54
+    BRANCH: test
+  script: 
+    - *invoke_pipeline
+  only:
+    refs:
+      - test            
