@@ -29,18 +29,29 @@ public class CacheJob {
 
         for(String cacheKey : keys){
 
-            if(cacheKey.contains(CacheType.OPTIONS.toString())){
+            if(cacheKey.contains("OPTIONS_DEV")){
 
-                OptionsResponse optionsResponse = (OptionsResponse) cacheService.getByKey(cacheKey);
                 counters.putIfAbsent(cacheKey, 0);
 
-                if(optionsResponse.prod && counters.get(cacheKey) == MINUTES){
-                    cacheService.cleanAll();
-                    counters.put(cacheKey, 0);
-                }else if(counters.get(cacheKey) == 1){
-                    cacheService.cleanAll();
-                    counters.put(cacheKey, 0);
-                }
+              //  if(cacheKey.contains(CacheType.OPTIONS_DEV.toString())){
+
+                    //dla developmentu - 1 minuta
+                    if(counters.get(cacheKey) >= 1){
+                        cacheService.cleanAll();
+                        counters.put(cacheKey, 0);
+                    }
+
+            //    }
+
+//                else {
+//
+//                    //dla produkcji - 30 min
+//                    if(counters.get(cacheKey) >= MINUTES){
+//                        cacheService.cleanAll();
+//                        counters.put(cacheKey, 0);
+//                    }
+//
+//                }
 
                 counters.put(cacheKey, counters.get(cacheKey)+1);
 

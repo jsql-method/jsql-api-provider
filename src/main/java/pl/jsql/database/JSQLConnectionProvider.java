@@ -2,6 +2,7 @@ package pl.jsql.database;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pl.jsql.ApiProviderApplication;
 import pl.jsql.dto.Keys;
 import pl.jsql.dto.OptionsResponse;
 import pl.jsql.exceptions.JSQLException;
@@ -45,9 +46,6 @@ public class JSQLConnectionProvider {
 
         }
 
-        System.out.println("Existing connections: "+connections.size());
-        System.out.println("Connections timings: "+connectionsTime.size());
-
     }
 
     private Connection getConnection(boolean saveInMap) throws JSQLException {
@@ -69,7 +67,7 @@ public class JSQLConnectionProvider {
         String password;
         String connectionUrl;
 
-        if (optionsResponse.prod) {
+        if (optionsResponse.isProductionDeveloper && !ApiProviderApplication.isLocalVersion) {
             username = optionsResponse.productionDatabaseOptions.databaseConnectionUsername;
             password = optionsResponse.productionDatabaseOptions.databaseConnectionPassword;
             connectionUrl = optionsResponse.productionDatabaseOptions.databaseConnectionUrl;
@@ -199,7 +197,7 @@ public class JSQLConnectionProvider {
         OptionsResponse optionsResponse = jsqlConnector.requestOptions(keys.apiKey, keys.devKey);
         Integer connectionTimeout;
 
-        if (optionsResponse.prod) {
+        if (optionsResponse.isProductionDeveloper) {
             connectionTimeout = optionsResponse.productionDatabaseOptions.databaseConnectionTimeout;
         } else {
             connectionTimeout = optionsResponse.developerDatabaseOptions.databaseConnectionTimeout;
