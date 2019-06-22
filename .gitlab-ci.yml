@@ -12,7 +12,7 @@ stages:
   - build
   - create image
   - deploy service
-  - deploy test app
+  # - deploy test app
 
 .build_gradle_template: &build_ref
   stage: build
@@ -163,110 +163,110 @@ deploy prod:
 # Invoke pipeline test app
 ########################################################
 
-jsql-react-test-app:
-  stage: deploy test app
-  image: gempesaw/curl-jq:latest
-  variables:
-    PROJECT_ID: 58
-    BRANCH: test
-  script: 
-    - *invoke_pipeline
-  only:
-    refs:
-      - test
+# jsql-react-test-app:
+#   stage: deploy test app
+#   image: gempesaw/curl-jq:latest
+#   variables:
+#     PROJECT_ID: 58
+#     BRANCH: test
+#   script: 
+#     - *invoke_pipeline
+#   only:
+#     refs:
+#       - test
 
-jsql-vue-test-app:
-  stage: deploy test app
-  image: gempesaw/curl-jq:latest
-  variables:
-    PROJECT_ID: 64
-    BRANCH: test
-  script: 
-    - *invoke_pipeline
-  only:
-    refs:
-      - test
+# jsql-vue-test-app:
+#   stage: deploy test app
+#   image: gempesaw/curl-jq:latest
+#   variables:
+#     PROJECT_ID: 64
+#     BRANCH: test
+#   script: 
+#     - *invoke_pipeline
+#   only:
+#     refs:
+#       - test
 
-jsql-angular7-test-app:
-  stage: deploy test app
-  image: gempesaw/curl-jq:latest
-  variables:
-    PROJECT_ID: 34
-    BRANCH: test
-  script: 
-    - *invoke_pipeline
-  only:
-    refs:
-      - test
+# jsql-angular7-test-app:
+#   stage: deploy test app
+#   image: gempesaw/curl-jq:latest
+#   variables:
+#     PROJECT_ID: 34
+#     BRANCH: test
+#   script: 
+#     - *invoke_pipeline
+#   only:
+#     refs:
+#       - test
 
-jsql-jquery-test-app:
-  stage: deploy test app
-  image: gempesaw/curl-jq:latest
-  variables:
-    PROJECT_ID: 50
-    BRANCH: test
-  script: 
-    - *invoke_pipeline
-  only:
-    refs:
-      - test
+# jsql-jquery-test-app:
+#   stage: deploy test app
+#   image: gempesaw/curl-jq:latest
+#   variables:
+#     PROJECT_ID: 50
+#     BRANCH: test
+#   script: 
+#     - *invoke_pipeline
+#   only:
+#     refs:
+#       - test
 
-jsql-angular1-test-app:
-  stage: deploy test app
-  image: gempesaw/curl-jq:latest
-  variables:
-    PROJECT_ID: 24
-    BRANCH: test
-  script: 
-    - *invoke_pipeline
-  only:
-    refs:
-      - test
+# jsql-angular1-test-app:
+#   stage: deploy test app
+#   image: gempesaw/curl-jq:latest
+#   variables:
+#     PROJECT_ID: 24
+#     BRANCH: test
+#   script: 
+#     - *invoke_pipeline
+#   only:
+#     refs:
+#       - test
 
-jsql-javascript1-test-app:
-  stage: deploy test app
-  image: gempesaw/curl-jq:latest
-  variables:
-    PROJECT_ID: 44
-    BRANCH: test
-  script: 
-    - *invoke_pipeline
-  only:
-    refs:
-      - test
+# jsql-javascript1-test-app:
+#   stage: deploy test app
+#   image: gempesaw/curl-jq:latest
+#   variables:
+#     PROJECT_ID: 44
+#     BRANCH: test
+#   script: 
+#     - *invoke_pipeline
+#   only:
+#     refs:
+#       - test
 
-jsql-spring-boot-test-app:
-  stage: deploy test app
-  image: gempesaw/curl-jq:latest
-  variables:
-    PROJECT_ID: 61
-    BRANCH: test
-  script: 
-    - *invoke_pipeline
-  only:
-    refs:
-      - test
+# jsql-spring-boot-test-app:
+#   stage: deploy test app
+#   image: gempesaw/curl-jq:latest
+#   variables:
+#     PROJECT_ID: 61
+#     BRANCH: test
+#   script: 
+#     - *invoke_pipeline
+#   only:
+#     refs:
+#       - test
 
-jsql-grails-test-app:
-  stage: deploy test app
-  image: gempesaw/curl-jq:latest
-  variables:
-    PROJECT_ID: 40
-    BRANCH: test
-  script: 
-    - *invoke_pipeline
-  only:
-    refs:
-      - test
+# jsql-grails-test-app:
+#   stage: deploy test app
+#   image: gempesaw/curl-jq:latest
+#   variables:
+#     PROJECT_ID: 40
+#     BRANCH: test
+#   script: 
+#     - *invoke_pipeline
+#   only:
+#     refs:
+#       - test
 
-jsql-node-test-app:
-  stage: deploy test app
-  image: gempesaw/curl-jq:latest
-  variables:
-    PROJECT_ID: 54
-    BRANCH: test
-  script: 
-    - *invoke_pipeline
-  only:
-    refs:
-      - test            
+# jsql-node-test-app:
+#   stage: deploy test app
+#   image: gempesaw/curl-jq:latest
+#   variables:
+#     PROJECT_ID: 54
+#     BRANCH: test
+#   script: 
+#     - *invoke_pipeline
+#   only:
+#     refs:
+#       - test            
