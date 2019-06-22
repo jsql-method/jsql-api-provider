@@ -213,7 +213,10 @@ public class JSQLConnectionProvider {
 
                 if (!connection.isClosed()) {
 
-                    connection.rollback();
+                    if(!connection.getAutoCommit()){
+                        connection.rollback();
+                    }
+
                     connection.close();
                 }
 

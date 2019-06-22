@@ -3,6 +3,8 @@ package pl.jsql.enums;
 public enum CacheType {
 
     OPTIONS_PROD,
-    OPTIONS_DEV
+    OPTIONS_DEV,
+
+   // QUERIES_PROD
 
 }
