@@ -6,10 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import pl.jsql.ApiProviderApplication;
-import pl.jsql.dto.BasicResponseWithHashQueryPair;
-import pl.jsql.dto.BasicResponseWithOptionsResponse;
-import pl.jsql.dto.HashQueryPair;
-import pl.jsql.dto.OptionsResponse;
+import pl.jsql.dto.*;
 import pl.jsql.enums.CacheType;
 import pl.jsql.exceptions.JSQLException;
 
@@ -31,14 +28,90 @@ public class JSQLConnector {
     @Value("${jsql.api.path.request.queries}")
     private String requestQueries;
 
+    @Value("${jsql.api.path.request.purge}")
+    private String requestPurge;
+
     @Value("${jsql.api.path.request.queries-grouped}")
     private String requestQueriesGrouped;
+
+    @Value("${jsql.api.path.request.allQueries}")
+    private String requestAllQueries;
+
+    @Value("${jsql.api.path.request.cacheInfo}")
+    private String requestCacheInfo;
 
     @Autowired
     private SecurityService securityService;
 
     @Autowired
     private CacheService cacheService;
+
+    public PurgeResponse requestPurge() throws JSQLException {
+
+        String fullUrl = origin + requestPurge;
+        String responseJSON = this.call(fullUrl, null, "POST", null, null);
+
+        if (!responseJSON.isEmpty()) {
+            try {
+
+                BasicResponseWithPurgeCache basicResponse = new ObjectMapper().readValue(responseJSON, BasicResponseWithPurgeCache.class);
+                return basicResponse.data;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new JSQLException("JSQL JSQLConnector.requestPurge: " + e.getMessage());
+            }
+        }
+
+        return null;
+
+    }
+
+//    public List<CacheInfoResponse> requestCacheInfo() throws JSQLException {
+//
+//        String fullUrl = origin + requestCacheInfo;
+//
+//        String responseJSON = this.call(fullUrl, null, "POST", securityService.getApiKey(), securityService.getDevKey());
+//
+//        if (!responseJSON.isEmpty()) {
+//            try {
+//
+//                BasicResponse basicResponse = new ObjectMapper().readValue(responseJSON, BasicResponse.class);
+//                return (List<CacheInfoResponse>) basicResponse.data;
+//
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                throw new JSQLException("JSQL JSQLConnector.requestQueries: " + e.getMessage());
+//            }
+//        }
+//
+//        return new ArrayList<>();
+//
+//    }
+
+//    public List<HashQueryPair> requestAllQueries() throws JSQLException {
+//
+//        String fullUrl = origin + requestAllQueries;
+//
+//        String responseJSON = this.call(fullUrl, null, "POST", securityService.getApiKey(), securityService.getDevKey());
+//
+//        if (!responseJSON.isEmpty()) {
+//            try {
+//
+//                BasicResponseWithHashQueryPair basicResponse = new ObjectMapper().readValue(responseJSON, BasicResponseWithHashQueryPair.class);
+//                List<HashQueryPair> queryPairList = basicResponse.data;
+//
+//                //cacheService.cache(CacheType.QUERIES_PROD, queryPairList, securityService.getApiKey(), securityService.getDevKey());
+//
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                throw new JSQLException("JSQL JSQLConnector.requestQueries: " + e.getMessage());
+//            }
+//        }
+//
+//        return new ArrayList<>();
+//
+//    }
 
     public List<HashQueryPair> requestQueries(List<String> hashesList) throws JSQLException {
 
@@ -134,8 +207,15 @@ public class JSQLConnector {
 
             conn.setRequestMethod(method);
             conn.setRequestProperty("Content-Type", "application/json");
-            conn.setRequestProperty("Api-Key", apiKey);
-            conn.setRequestProperty("Dev-Key", devKey);
+
+            if(apiKey != null){
+                conn.setRequestProperty("Api-Key", apiKey);
+            }
+
+            if(devKey != null){
+                conn.setRequestProperty("Dev-Key", devKey);
+            }
+
             conn.setUseCaches(false);
 
             if (method.equals("POST")) {

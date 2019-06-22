@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import pl.jsql.database.JSQLSQLExecutor;
 import pl.jsql.dto.HashQueryPair;
 import pl.jsql.dto.TransactionThread;
+import pl.jsql.enums.CacheType;
 import pl.jsql.enums.JSQLQueryTypeEnum;
 import pl.jsql.exceptions.JSQLException;
 
@@ -130,6 +131,12 @@ public class JSQLService {
         return treeMap;
     }
 
+//    @Autowired
+//    private CacheService cacheService;
+//
+//    @Autowired
+//    private SecurityService securityService;
+
     /**
      * Pobiera zapytanie SQL na podstawie hasha zapytania
      * Strzela do JSQL API po query SQL
@@ -141,6 +148,20 @@ public class JSQLService {
     private String getSQLQuery(Map<String, Object> data) throws JSQLException {
 
         List<HashQueryPair> queries;
+
+//        if(cacheService.isProdCache(securityService.getApiKey())){
+//
+//            //Generalnie problem z tym, że mimo że zapytania będą pobrane, to brak będzie odznaczania ich w bazie jako used
+//            // i tworzenia dynamicznych SQL...
+//
+//            if(cacheService.exists(CacheType.QUERIES_PROD, securityService.getApiKey(), securityService.getDevKey())){
+//
+//            }else{
+//
+//            }
+//          //  List<HashQueryPair> queryPairList = cacheService.get(CacheType.QUERIES_PROD, securityService.getApiKey(), securityService.getDevKey());
+//
+//        }
 
         try {
 
